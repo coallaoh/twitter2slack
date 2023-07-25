@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - echo "Installing dependencies..."
+      - pip install twython slack_sdk
+      
+  pre_build:
+    commands:
+      - echo "Pre-build phase..."
+
+  build:
+    commands:
+      - echo "Build phase..."
+      - echo "Running the script..."
+      - python main.py
+
+  post_build:
+    commands:
+      - echo "Post-build phase..."
+
+artifacts:
+  files:
+    - '**/*'
