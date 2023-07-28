@@ -8,9 +8,10 @@ from slack import WebClient
 from slack_bolt import App
 
 SLACK_TOKEN = os.getenv('SLACK_BOT_TOKEN')
-GSPREAD_CONFIG_FILE = os.getenv("GSPREAD_CONFIG_FILE")
 SLACK_CHANNEL_ID = os.getenv("SLACK_CHANNEL_ID")
 TIME_ZONE = os.getenv("TIME_ZONE")
+GSPREAD_PRIVATE_KEY = os.getenv("GSPREAD_PRIVATE_KEY")
+GSPREAD_CLIENT_EMAIL = os.getenv("GSPREAD_CLIENT_EMAIL")
 
 
 def set_time_zone(datetime_object):
@@ -28,7 +29,11 @@ def filter_list_of_rows(list_of_rows):
 
 class Twitter2Slack(object):
     def __init__(self):
-        gc = gspread.service_account(filename=GSPREAD_CONFIG_FILE)
+        gc = gspread.service_account_from_dict({
+            "private_key": GSPREAD_PRIVATE_KEY.replace("\\n", "\n"),
+            "client_email": GSPREAD_CLIENT_EMAIL,
+            "token_uri": "https://oauth2.googleapis.com/token",
+        })
         self.sheet = gc.open("coallaoh's tweet DB")
         self.app = App(token=SLACK_TOKEN)
         self.slack = WebClient(token=SLACK_TOKEN)
