@@ -1,28 +1,56 @@
+from datetime import datetime
+from datetime import timedelta
 import os
-from twython import Twython
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 
-TWITTER_APP_KEY = os.getenv('TWITTER_APP_KEY')
-TWITTER_APP_SECRET = os.getenv('TWITTER_APP_SECRET')
-TWITTER_OAUTH_TOKEN = os.getenv('TWITTER_OAUTH_TOKEN')
-TWITTER_OAUTH_TOKEN_SECRET = os.getenv('TWITTER_OAUTH_TOKEN_SECRET')
-TWITTER_USERNAME = os.getenv('TWITTER_USERNAME')
-SLACK_TOKEN = os.getenv('SLACK_TOKEN')
-SLACK_CHANNEL_ID = "test"
+import gspread
+import pytz
+from slack import WebClient
+from slack_bolt import App
 
-twitter = Twython(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_OAUTH_TOKEN, TWITTER_OAUTH_TOKEN_SECRET)
+SLACK_TOKEN = os.getenv('SLACK_BOT_TOKEN')
+GSPREAD_CONFIG_FILE = os.getenv("GSPREAD_CONFIG_FILE")
+SLACK_CHANNEL_ID = os.getenv("SLACK_CHANNEL_ID")
+TIME_ZONE = os.getenv("TIME_ZONE")
 
-# Get the most recent tweet
-tweets = twitter.get_user_timeline(screen_name=TWITTER_USERNAME, count=1)
-latest_tweet = tweets[0]['text']
 
-# Get the Slack API credentials
+def set_time_zone(datetime_object):
+    timezone = pytz.timezone(TIME_ZONE)
+    return timezone.localize(datetime_object)
 
-slack = WebClient(token=SLACK_TOKEN)
 
-# Post the tweet to a Slack channel
-try:
-    response = slack.chat_postMessage(channel=SLACK_CHANNEL_ID, text=latest_tweet)
-except SlackApiError as e:
-    assert e.response["error"]
+def filter_list_of_rows(list_of_rows):
+    for row in list_of_rows:
+        today = set_time_zone(datetime.today()).date()
+        tweet_date = set_time_zone(datetime.strptime(row[0], '%B %d, %Y at %I:%M%p')).date()
+        if tweet_date == today - timedelta(days=1):
+            yield row
+
+
+class Twitter2Slack(object):
+    def __init__(self):
+        gc = gspread.service_account(filename=GSPREAD_CONFIG_FILE)
+        self.sheet = gc.open("coallaoh's tweet DB")
+        self.app = App(token=SLACK_TOKEN)
+        self.slack = WebClient(token=SLACK_TOKEN)
+
+    def send_slack_message(self, text):
+        self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID, text=text)
+
+    def scan_gspread_and_send_slack(self):
+        self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID,
+                                    text=f"===== {datetime.today().date().strftime('%d %B %Y')} ====="
+                                         f"Hello from your bot! :robot_face: \n"
+                                         f"Here's today's AI news roundup from @Joon \n")
+        list_of_rows = self.sheet.sheet1.get_values()
+        for row in filter_list_of_rows(list_of_rows):
+            self.send_slack_message(row[2])
+            print(row)
+
+
+def main():
+    twitter2slack = Twitter2Slack()
+    twitter2slack.scan_gspread_and_send_slack()
+
+
+if __name__ == "__main__":
+    main()
