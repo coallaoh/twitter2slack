@@ -4,7 +4,7 @@ import os
 
 import gspread
 import pytz
-from slack import WebClient
+import slack
 from slack_bolt import App
 
 SLACK_TOKEN = os.getenv('SLACK_BOT_TOKEN')
@@ -36,7 +36,7 @@ class Twitter2Slack(object):
         })
         self.sheet = gc.open("coallaoh's tweet DB")
         self.app = App(token=SLACK_TOKEN)
-        self.slack = WebClient(token=SLACK_TOKEN)
+        self.slack = slack.WebClient(token=SLACK_TOKEN)
 
     def send_slack_message(self, text):
         self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID, text=text)
