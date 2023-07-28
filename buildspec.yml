@@ -6,7 +6,7 @@ phases:
       python: 3.8
     commands:
       - echo "Installing dependencies..."
-      - pip install aiohttp pytz gspread slack slack-bolt slack-sdk
+      - pip install aiohttp pytz gspread slack-bolt slack-sdk
       
   pre_build:
     commands:
