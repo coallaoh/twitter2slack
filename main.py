@@ -43,7 +43,7 @@ class Twitter2Slack(object):
 
     def scan_gspread_and_send_slack(self):
         self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID,
-                                    text=f"===== {datetime.today().date().strftime('%d %B %Y')} ====="
+                                    text=f"===== {datetime.today().date().strftime('%d %B %Y')} =====\n"
                                          f"Hello from your bot! :robot_face: \n"
                                          f"Here's today's AI news roundup from @Joon \n")
         list_of_rows = self.sheet.sheet1.get_values()
