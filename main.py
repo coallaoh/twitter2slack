@@ -19,11 +19,24 @@ def set_time_zone(datetime_object):
     return timezone.localize(datetime_object)
 
 
+def post_criteria(tweet_date, today):
+    if today.weekday() == 5:
+        return False
+    elif today.weekday() == 6:
+        return False
+    elif today.weekday() == 0:
+        return ((tweet_date == today - timedelta(days=1)) or 
+                (tweet_date == today - timedelta(days=2)) or 
+                (tweet_date == today - timedelta(days=3)))
+    else:
+        return tweet_date == today - timedelta(days=1)
+
+
 def filter_list_of_rows(list_of_rows):
     for row in list_of_rows:
         today = set_time_zone(datetime.today()).date()
         tweet_date = set_time_zone(datetime.strptime(row[0], '%B %d, %Y at %I:%M%p')).date()
-        if tweet_date == today - timedelta(days=1):
+        if post_criteria(tweet_date=tweet_date, today=today):
             yield row
 
 
