@@ -32,9 +32,8 @@ def post_criteria(tweet_date, today):
         return tweet_date == today - timedelta(days=1)
 
 
-def filter_list_of_rows(list_of_rows):
+def filter_list_of_rows(today, list_of_rows):
     for row in list_of_rows:
-        today = set_time_zone(datetime.today()).date()
         tweet_date = set_time_zone(datetime.strptime(row[0], '%B %d, %Y at %I:%M%p')).date()
         if post_criteria(tweet_date=tweet_date, today=today):
             yield row
@@ -55,12 +54,15 @@ class Twitter2Slack(object):
         self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID, text=text)
 
     def scan_gspread_and_send_slack(self):
+        today = set_time_zone(datetime.today()).date()
+        if today.weekday() in (5, 6):
+            return
         self.slack.chat_postMessage(channel=SLACK_CHANNEL_ID,
                                     text=f"===== {datetime.today().date().strftime('%d %B %Y')} =====\n"
                                          f"Hello from your bot! :robot_face: \n"
                                          f"Here's today's AI news roundup from @Joon \n")
         list_of_rows = self.sheet.sheet1.get_values()
-        for row in filter_list_of_rows(list_of_rows):
+        for row in filter_list_of_rows(today, list_of_rows):
             self.send_slack_message(row[2])
             print(row)
 
